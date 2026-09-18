@@ -1,12 +1,12 @@
-const express = require("express");
+const express = require('express');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5001;
 
-app.disable("x-powered-by");
+app.disable('x-powered-by');
 
-app.get("/", (req, res) => {
-  res.send("Hello, MicroRep server!");
+app.get('/', (req, res) => {
+  res.send('Hello, MicroRep server!');
 });
 
 app.listen(PORT, () => {
