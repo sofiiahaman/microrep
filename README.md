@@ -73,20 +73,25 @@ Make sure you have the following installed:
    npm install
    ```
 
+npm --prefix ./client install
+npm --prefix ./server install
+
+````
+
 2. **Configure environment variables:**
-   Create your local environment file based on `.env.example` and set the required variables.
+Create your local environment file based on `.env.example` and set the required variables.
 
 ### Running the Application
 
 - **Start the frontend:**
 
-  ```bash
-  npm run dev:frontend
-  ```
+```bash
+npm run dev:client
+````
 
 - **Start the backend** _(in a separate terminal)_:
   ```bash
-  npm run dev:backend
+  npm run dev:server
   ```
 
 The frontend and backend will run on their respective local development ports.
