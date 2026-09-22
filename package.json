@@ -4,7 +4,7 @@
   "scripts": {
     "dev:client": "npm --prefix ./client run dev",
     "dev:server": "npm --prefix ./server run dev",
-    "lint": "npm --prefix ./client run lint",
+    "lint": "npm --prefix ./client run lint && npm --prefix ./server run lint",
     "build": "npm --prefix ./client run build",
     "check": "npm run format:check && npm run lint && npm run build",
     "format": "prettier --write .",
