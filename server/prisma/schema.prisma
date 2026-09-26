@@ -5,3 +5,74 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id String @id @default(uuid())
+  email String @unique
+  passwordHash String
+  name String?
+  createdAt DateTime @default(now()) 
+  updatedAt DateTime @updatedAt
+
+  decks Deck[]
+  reviews Review[]
+}
+
+model Deck {
+  id String @id @default(uuid())
+  name String
+  description String?
+  createdAt DateTime @default(now()) 
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  cards Card[]
+
+  @@index([userId])
+}
+
+model Card {
+  id String @id @default(uuid())
+  front String
+  back String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deckId String
+  deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  reviews Review[]
+
+  // SM-2 scheduling state 
+  repetition Int @default(0) 
+  intervalDays Int @default(0) 
+  easeFactor Float @default(2.5) 
+  nextReviewAt DateTime?
+
+  @@index([deckId]) 
+  @@index([nextReviewAt])
+}
+
+model Review {
+  id String @id @default(uuid())
+  rating ReviewRating 
+  reviewedAt DateTime @default(now())
+
+  cardId String 
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade) 
+  userId String 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([cardId]) 
+  @@index([userId]) 
+  @@index([reviewedAt])
+}
+
+enum ReviewRating {
+  AGAIN
+  HARD
+  GOOD
+  EASY
+}
