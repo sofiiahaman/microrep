@@ -12,14 +12,18 @@ app.get('/', (req, res) => {
   res.send('Hello, MicroRep server!');
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+if (require.main === module) {
+  const server = app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
 
-const shutdown = async () => {
-  await prisma.$disconnect();
-  server.close(() => process.exit(0));
-};
+  const shutdown = async () => {
+    await prisma.$disconnect();
+    server.close(() => process.exit(0));
+  };
 
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}
+
+module.exports = app;
