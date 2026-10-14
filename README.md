@@ -71,15 +71,12 @@ Make sure you have the following installed:
    git clone https://github.com/sofiiahaman/microrep.git
    cd microrep
    npm install
+   npm --prefix ./client install
+   npm --prefix ./server install
    ```
 
-npm --prefix ./client install
-npm --prefix ./server install
-
-````
-
 2. **Configure environment variables:**
-Create your local environment file based on `.env.example` and set the required variables.
+   Create your local environment file based on `.env.example` and set the required variables.
 
 ### Running the Application
 
@@ -87,7 +84,7 @@ Create your local environment file based on `.env.example` and set the required 
 
 ```bash
 npm run dev:client
-````
+```
 
 - **Start the backend** _(in a separate terminal)_:
   ```bash

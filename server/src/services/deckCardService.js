@@ -29,10 +29,12 @@ const getDeckCards = async (deckId) => {
 const postDeckCard = async (deckId, data) => {
   await ensureDeckExists(deckId);
   return prisma.card.create({
-    data,
-    deck: {
-      connect: {
-        id: deckId,
+    data: {
+      ...data,
+      deck: {
+        connect: {
+          id: deckId,
+        },
       },
     },
   });
