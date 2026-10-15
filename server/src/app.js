@@ -17,4 +17,17 @@ app.get('/', (req, res) => {
   res.send('Hello, MicroRep server!');
 });
 
+app.use((error, req, res, next) => {
+  if (res.headersSent) {
+    return next(error);
+  }
+
+  const status = Number.isInteger(error.status) ? error.status : 500;
+  const safeStatus = status >= 400 && status < 600 ? status : 500;
+
+  res.status(safeStatus).json({
+    message: safeStatus === 500 ? 'Internal server error' : error.message,
+  });
+});
+
 module.exports = app;

@@ -4,6 +4,7 @@ const test = require('node:test');
 const cardService = require('./services/cardService');
 const deckCardService = require('./services/deckCardService');
 const deckService = require('./services/deckService');
+const reviewService = require('./services/reviewService');
 
 const calls = [];
 
@@ -14,6 +15,24 @@ const fakeCard = {
   back: 'Hello',
   deckId: 'deck-1',
 };
+
+const fakeReview = {
+  id: 'review-1',
+  cardId: 'card-1',
+  userId: 'user-1',
+  rating: 'GOOD',
+  reviewedAt: '2026-10-15T08:00:00.000Z',
+};
+
+const fakeReviewedCard = {
+  ...fakeCard,
+  repetition: 1,
+  intervalDays: 1,
+  easeFactor: 2.5,
+  nextReviewAt: '2026-10-16T08:00:00.000Z',
+};
+
+let reviewServiceError = null;
 
 deckService.getDecks = async () => {
   calls.push(['getDecks']);
@@ -59,6 +78,19 @@ deckCardService.getDeckCards = async (deckId) => {
 deckCardService.postDeckCard = async (deckId, data) => {
   calls.push(['postDeckCard', deckId, data]);
   return { ...fakeCard, ...data, deckId };
+};
+
+reviewService.createReview = async (cardId, userId, rating) => {
+  calls.push(['createReview', cardId, userId, rating]);
+
+  if (reviewServiceError) {
+    throw reviewServiceError;
+  }
+
+  return {
+    review: fakeReview,
+    card: fakeReviewedCard,
+  };
 };
 
 const app = require('./app');
@@ -186,10 +218,7 @@ test('deckCard API rejects missing or blank card fields', async () => {
 });
 
 test('deckCard API returns an error when the deck does not exist', async () => {
-  assert.equal(
-    (await request('GET', '/api/decks/missing/cards')).status,
-    404
-  );
+  assert.equal((await request('GET', '/api/decks/missing/cards')).status, 404);
 });
 
 test('card API gets, updates, and deletes cards', async () => {
@@ -219,4 +248,98 @@ test('card API validates patch requests and returns 404 for missing cards', asyn
     status: 404,
     body: { message: 'Card not found' },
   });
+});
+
+test('review API creates a review and returns the updated card schedule', async () => {
+  reviewServiceError = null;
+
+  const response = await request('POST', '/api/cards/card-1/reviews', {
+    userId: 'user-1',
+    rating: 'GOOD',
+  });
+
+  assert.deepEqual(response, {
+    status: 201,
+    body: {
+      review: fakeReview,
+      card: fakeReviewedCard,
+    },
+  });
+
+  assert.deepEqual(calls.at(-1), ['createReview', 'card-1', 'user-1', 'GOOD']);
+});
+
+test('review API rejects invalid ratings', async () => {
+  const previousCalls = calls.length;
+
+  for (const rating of ['OK', 'good', '', null, 42]) {
+    assert.deepEqual(
+      await request('POST', '/api/cards/card-1/reviews', {
+        userId: 'user-1',
+        rating,
+      }),
+      {
+        status: 400,
+        body: {
+          message: 'Rating must be one of: AGAIN, HARD, GOOD, EASY',
+        },
+      }
+    );
+  }
+
+  assert.equal(calls.length, previousCalls);
+});
+
+test('review API rejects a missing userId', async () => {
+  const previousCalls = calls.length;
+
+  assert.deepEqual(
+    await request('POST', '/api/cards/card-1/reviews', {
+      rating: 'GOOD',
+    }),
+    {
+      status: 400,
+      body: { message: 'userId is required' },
+    }
+  );
+
+  assert.equal(calls.length, previousCalls);
+});
+
+test('review API returns 404 when the service cannot find the card', async () => {
+  reviewServiceError = Object.assign(new Error('Card not found'), {
+    status: 404,
+  });
+
+  try {
+    const response = await request('POST', '/api/cards/missing/reviews', {
+      userId: 'user-1',
+      rating: 'GOOD',
+    });
+
+    assert.deepEqual(response, {
+      status: 404,
+      body: { message: 'Card not found' },
+    });
+  } finally {
+    reviewServiceError = null;
+  }
+});
+
+test('review API handles unexpected service errors', async () => {
+  reviewServiceError = new Error('Database connection failed');
+
+  try {
+    const response = await request('POST', '/api/cards/card-1/reviews', {
+      userId: 'user-1',
+      rating: 'GOOD',
+    });
+
+    assert.equal(response.status, 500);
+    assert.deepEqual(response.body, {
+      message: 'Internal server error',
+    });
+  } finally {
+    reviewServiceError = null;
+  }
 });
