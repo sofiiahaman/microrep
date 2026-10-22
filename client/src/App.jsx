@@ -1,7 +1,9 @@
 function App() {
   return (
     <>
-      <p>MicroRep frontend</p>
+      <p className="text-2xl font-bold text-violet-600 p-4">
+        MicroRep frontend
+      </p>
     </>
   );
 }
