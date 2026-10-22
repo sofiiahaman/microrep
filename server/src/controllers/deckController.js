@@ -50,7 +50,49 @@ const patchDeck = async (req, res, next) => {
   try {
     const id = req.params.id;
     const { name, description } = req.body;
-    const updatedDeck = await deckService.patchDeck(id, { name, description });
+
+    const allowedFields = ['name', 'description'];
+    const providedFields = Object.keys(req.body);
+
+    if (providedFields.some((field) => !allowedFields.includes(field))) {
+      return res.status(400).json({
+        message: 'Only name and description can be updated',
+      });
+    }
+
+    if (providedFields.length === 0) {
+      return res.status(400).json({
+        message: 'At least one field (name or description) is required',
+      });
+    }
+
+    if (name !== undefined && (typeof name !== 'string' || !name.trim())) {
+      return res.status(400).json({
+        message: 'Name must be a non-empty string',
+      });
+    }
+
+    if (
+      description !== undefined &&
+      description !== null &&
+      typeof description !== 'string'
+    ) {
+      return res.status(400).json({
+        message: 'Description must be a string or null',
+      });
+    }
+
+    const data = {};
+
+    if (name !== undefined) {
+      data.name = name.trim();
+    }
+
+    if (description !== undefined) {
+      data.description = description === null ? null : description.trim();
+    }
+
+    const updatedDeck = await deckService.patchDeck(id, data);
     res.status(200).json(updatedDeck);
   } catch (error) {
     next(error);

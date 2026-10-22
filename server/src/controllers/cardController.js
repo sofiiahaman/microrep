@@ -27,10 +27,22 @@ const patchCard = async (req, res, next) => {
       });
     }
 
+    if (front !== undefined && (typeof front !== 'string' || !front.trim())) {
+      return res.status(400).json({
+        message: 'Front must be a non-empty string',
+      });
+    }
+
+    if (back !== undefined && (typeof back !== 'string' || !back.trim())) {
+      return res.status(400).json({
+        message: 'Back must be a non-empty string',
+      });
+    }
+
     const data = {};
 
-    if (front !== undefined) data.front = front;
-    if (back !== undefined) data.back = back;
+    if (front !== undefined) data.front = front.trim();
+    if (back !== undefined) data.back = back.trim();
 
     const updatedCard = await cardService.patchCard(id, data);
     res.status(200).json(updatedCard);
