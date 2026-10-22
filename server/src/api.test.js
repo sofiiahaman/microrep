@@ -5,6 +5,7 @@ const cardService = require('./services/cardService');
 const deckCardService = require('./services/deckCardService');
 const deckService = require('./services/deckService');
 const reviewService = require('./services/reviewService');
+const studyService = require('./services/studyService');
 
 const calls = [];
 
@@ -33,6 +34,16 @@ const fakeReviewedCard = {
 };
 
 let reviewServiceError = null;
+let studyServiceError = null;
+const fakeDueCards = [
+  {
+    ...fakeCard,
+    createdAt: '2026-10-15T08:00:00.000Z',
+    repetition: 0,
+    intervalDays: 0,
+    nextReviewAt: null,
+  },
+];
 
 deckService.getDecks = async () => {
   calls.push(['getDecks']);
@@ -91,6 +102,16 @@ reviewService.createReview = async (cardId, userId, rating) => {
     review: fakeReview,
     card: fakeReviewedCard,
   };
+};
+
+studyService.getDueCards = async (userId) => {
+  calls.push(['getDueCards', userId]);
+
+  if (studyServiceError) {
+    throw studyServiceError;
+  }
+
+  return fakeDueCards;
 };
 
 const app = require('./app');
@@ -341,5 +362,50 @@ test('review API handles unexpected service errors', async () => {
     });
   } finally {
     reviewServiceError = null;
+  }
+});
+
+test('study API returns due cards and their count', async () => {
+  studyServiceError = null;
+
+  assert.deepEqual(await request('GET', '/api/study/due?userId=user-1'), {
+    status: 200,
+    body: {
+      count: fakeDueCards.length,
+      cards: fakeDueCards,
+    },
+  });
+
+  assert.deepEqual(calls.at(-1), ['getDueCards', 'user-1']);
+});
+
+test('study API rejects a missing or blank userId', async () => {
+  const previousCalls = calls.length;
+
+  for (const userId of [undefined, '', '   ']) {
+    const path =
+      userId === undefined
+        ? '/api/study/due'
+        : `/api/study/due?userId=${encodeURIComponent(userId)}`;
+
+    assert.deepEqual(await request('GET', path), {
+      status: 400,
+      body: { message: 'userId query parameter is required' },
+    });
+  }
+
+  assert.equal(calls.length, previousCalls);
+});
+
+test('study API handles unexpected service errors', async () => {
+  studyServiceError = new Error('Database connection failed');
+
+  try {
+    assert.deepEqual(await request('GET', '/api/study/due?userId=user-1'), {
+      status: 500,
+      body: { message: 'Internal server error' },
+    });
+  } finally {
+    studyServiceError = null;
   }
 });
