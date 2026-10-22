@@ -409,3 +409,14 @@ test('study API handles unexpected service errors', async () => {
     studyServiceError = null;
   }
 });
+
+test('unknown routes return a JSON 404 response', async () => {
+  const response = await request('GET', '/api/unknown');
+
+  assert.deepEqual(response, {
+    status: 404,
+    body: {
+      message: 'Route not found',
+    },
+  });
+});

@@ -19,6 +19,13 @@ app.get('/', (req, res) => {
   res.send('Hello, MicroRep server!');
 });
 
+// Handle unknown routes
+app.use((req, res) => {
+  res.status(404).json({
+    message: 'Route not found',
+  });
+});
+
 app.use((error, req, res, next) => {
   if (res.headersSent) {
     return next(error);
