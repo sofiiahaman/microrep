@@ -31,12 +31,37 @@ app.use((error, req, res, next) => {
     return next(error);
   }
 
-  const status = Number.isInteger(error.status) ? error.status : 500;
+  const prismaStatusByCode = {
+    P2025: 404,
+    P2002: 409,
+    P2003: 409,
+  };
+
+  let status = Number.isInteger(error.status) ? error.status : 500;
+  let message = error.message;
+
+  if (error.code && prismaStatusByCode[error.code]) {
+    status = prismaStatusByCode[error.code];
+  }
+
+  if (error.name === 'PrismaClientValidationError') {
+    status = 400;
+    message = 'Invalid request data';
+  }
+
   const safeStatus = status >= 400 && status < 600 ? status : 500;
 
-  res.status(safeStatus).json({
-    message: safeStatus === 500 ? 'Internal server error' : error.message,
-  });
+  if (safeStatus === 500) {
+    message = 'Internal server error';
+  } else if (error.code === 'P2025') {
+    message = 'Resource not found';
+  } else if (error.code === 'P2002') {
+    message = 'A resource with this value already exists';
+  } else if (error.code === 'P2003') {
+    message = 'The operation conflicts with related records';
+  }
+
+  return res.status(safeStatus).json({ message });
 });
 
 module.exports = app;

@@ -5,6 +5,7 @@ const reviewService = require('../src/services/reviewService');
 const studyService = require('../src/services/studyService');
 
 const calls = [];
+const serviceErrors = {};
 
 const fakeDeck = { id: 'deck-1', name: 'Spanish', userId: 'user-1' };
 const fakeCard = {
@@ -60,11 +61,20 @@ deckService.postDeck = async (data) => {
 
 deckService.patchDeck = async (id, data) => {
   calls.push(['patchDeck', id, data]);
-  return { ...fakeDeck, ...data, id };
+
+  if (serviceErrors.patchDeck) {
+    throw serviceErrors.patchDeck;
+  }
+
+  return { ...fakeDeck, ...data };
 };
 
 deckService.deleteDeck = async (id) => {
   calls.push(['deleteDeck', id]);
+
+  if (serviceErrors.deleteDeck) {
+    throw serviceErrors.deleteDeck;
+  }
 };
 
 cardService.getCardById = async (id) => {
@@ -154,6 +164,7 @@ module.exports = {
   fakeReview,
   fakeReviewedCard,
   request,
+  serviceErrors,
   setReviewServiceError(error) {
     reviewServiceError = error;
   },

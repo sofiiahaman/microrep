@@ -1,7 +1,13 @@
 const assert = require('node:assert/strict');
 const { test, describe } = require('node:test');
 
-const { calls, fakeCard, fakeDeck, request } = require('./apiTestSetup');
+const {
+  calls,
+  fakeCard,
+  fakeDeck,
+  request,
+  serviceErrors,
+} = require('./apiTestSetup');
 
 test('deck API lists decks and gets a deck by id', async () => {
   assert.deepEqual(await request('GET', '/api/decks'), {
@@ -196,5 +202,43 @@ describe('PATCH /api/decks/:id validation', () => {
 
     assert.equal(response.status, 400);
     assert.equal(calls.length, callsBefore);
+  });
+});
+
+describe('Prisma P2025 handling', () => {
+  test('PATCH deck should return 404 for P2025', async () => {
+    serviceErrors.patchDeck = Object.assign(new Error('Record not found'), {
+      code: 'P2025',
+    });
+
+    try {
+      const response = await request('PATCH', '/api/decks/deck-1', {
+        name: 'Updated deck',
+      });
+
+      assert.equal(response.status, 404);
+      assert.deepEqual(response.body, {
+        message: 'Resource not found',
+      });
+    } finally {
+      delete serviceErrors.patchDeck;
+    }
+  });
+
+  test('DELETE deck should return 404 for P2025', async () => {
+    serviceErrors.deleteDeck = Object.assign(new Error('Record not found'), {
+      code: 'P2025',
+    });
+
+    try {
+      const response = await request('DELETE', '/api/decks/deck-1');
+
+      assert.equal(response.status, 404);
+      assert.deepEqual(response.body, {
+        message: 'Resource not found',
+      });
+    } finally {
+      delete serviceErrors.deleteDeck;
+    }
   });
 });
