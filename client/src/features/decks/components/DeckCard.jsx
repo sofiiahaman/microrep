@@ -1,34 +1,8 @@
 import { BookOpen, CheckCircle2, Pencil, Play, Trash2 } from 'lucide-react';
-
-const THEMES = [
-  {
-    bar: 'from-amber-500 to-orange-500',
-    icon: 'from-amber-500 to-orange-600',
-    fill: 'from-amber-500 to-orange-500',
-  },
-  {
-    bar: 'from-rose-500 to-pink-600',
-    icon: 'from-rose-500 to-pink-600',
-    fill: 'from-rose-500 to-pink-600',
-  },
-  {
-    bar: 'from-blue-500 to-cyan-600',
-    icon: 'from-blue-500 to-cyan-600',
-    fill: 'from-blue-500 to-cyan-600',
-  },
-  {
-    bar: 'from-violet-500 to-fuchsia-600',
-    icon: 'from-violet-500 to-fuchsia-600',
-    fill: 'from-violet-500 to-fuchsia-600',
-  },
-];
+import { getDeckTheme } from '../utils/deckThemes';
 
 function DeckCard({ deck, onStudy, onEdit, onDelete, onViewCards }) {
-  const numericId = Number(deck.id);
-  const theme =
-    THEMES[
-      Number.isFinite(numericId) ? Math.abs(numericId - 1) % THEMES.length : 0
-    ];
+  const theme = getDeckTheme(deck);
 
   const cardsCount = deck.cardsCount ?? 0;
   const progress = Math.min(100, Math.max(0, deck.progress ?? 0));
